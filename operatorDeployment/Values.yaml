@@ -1,0 +1,2 @@
+namespace: alidnsoperator
+image: newesissrl.azurecr.io/alidnsoperator:0.2.0

@@ -1,0 +1,4 @@
+FROM python:3.7 
+RUN pip install kopf && pip install kubernetes 
+COPY alidns_operator_handler.py /alidns_operator_handler.py 
+CMD kopf run --standalone /alidns_operator_handler.py

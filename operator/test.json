@@ -1,0 +1,70 @@
+{
+  "apiVersion": "batch/v1beta1",
+  "kind": "CronJob",
+  "metadata": {
+    "name": "name",
+    "namespace": "namespace"
+  },
+  "spec": {
+    "schedule": "cronSpec",
+    "jobTemplate": {
+      "spec": {
+        "template": {
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "hostName",
+                    "value": "hostName"
+                  },
+                  {
+                    "name": "domainName",
+                    "value": "domainName"
+                  },
+                  {
+                    "name": "mainIp",
+                    "value": "mainIp"
+                  },
+                  {
+                    "name": "backupIp",
+                    "value": "backupIp"
+                  },
+                  {
+                    "name": "probeUrl",
+                    "value": "probeUrl"
+                  },
+                  {
+                    "name": "probeVerb",
+                    "value": "probeVerb"
+                  },
+                  {
+                    "name": "probeSchema",
+                    "value": "probeSchema"
+                  },
+                  {
+                    "name": "privZoneId",
+                    "value": "privZoneId"
+                  },
+                  {
+                    "name": "accessKey",
+                    "value": "accessKey"
+                  },
+                  {
+                    "name": "secretKey",
+                    "value": "secretKey"
+                  },
+                  {
+                    "name": "region",
+                    "value": "region"
+                  }
+                ],
+                "image": "image"             
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

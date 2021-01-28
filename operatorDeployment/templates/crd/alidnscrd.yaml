@@ -1,0 +1,63 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: alidns.tools.newesis.com
+spec:
+  group: tools.newesis.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                # cronSpec are the frequency for the cronjob, every minute for example would be "* * * * *" at 6:05 "5 6 * * *"
+                cronSpec:
+                  type: string
+                # hostName to be managed in the DNS (combined with the domainName it will result in the FQDN)
+                hostName:
+                  type: string
+                # domainName for the DNS zone (combined with the hostName it will result in the FQDN)
+                domainName:
+                  type: string
+                # probe to test via http to verify status of each end point (relative path as /test/page , defaults to /)
+                probeUrl:
+                  type: string
+                # verb or method to be used for the test (GET, POST, defaults to GET)
+                probeVerb:
+                  type: string
+                # Schema to the use for the probe (HTTP, HTTPS, defaults to HTTP)
+                probeSchema:
+                  type: string
+                # IP to be preferred for the hostname
+                mainIp:
+                  type: string
+                # IP to be set to the hostname in case of failure of the main one
+                backupIp:
+                  type: string
+                # image to be used on the cronjob
+                image:
+                  type: string
+                # ID of the Alibaba DNS Private Zone
+                privZoneId:
+                  type: string
+                  # AccessKey to access Alibaba APIs via Terraform
+                accessKey:
+                  type: string
+                # secretKey to access Alibaba APIs via Terraform
+                secretKey:
+                  type: string
+                  # target region in Alibaba
+                region:
+                  type: string
+  scope: Namespaced
+  names:
+    plural: alidns
+    singular: alidns
+    kind: AliDns
+    shortNames:
+    - ad

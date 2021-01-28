@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alidns-operator
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: alidns-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alidns-operator
+  template:
+    metadata:
+      labels:
+        app: alidns-operator
+    spec:
+      serviceAccountName: alidns-operator
+      containers:
+      - image: {{ .Values.image }}
+        name: alinds-operator
