@@ -14,7 +14,7 @@ spec:
   probeSchema: HTTP # Protocol for the HTTP request used as probe, default to HTTP if not present; possible values HTTP and HTTPS
   mainIp: 40.85.114.137 # Mandatory, main IP for the DNS record
   backupIp: 52.164.227.161 # Mandatory, backup IP for the DNS record (to be used if the main one not working)
-  image: newesissrl.azurecr.io/alidnsmanager:0.2.0 # Mandatory, image to be executed in the cronjob, you can replace it with a custom one, all specs here will be available as env variables
+  image: newesissrl.azurecr.io/alidnsmanager:0.3.0 # Mandatory, image to be executed in the cronjob, you can replace it with a custom one, all specs here will be available as env variables
   privZoneId: 1234eerae2 # Mandatory, Alibaba privateZoneID
   accessKey: 123erer4aw2 # Mandatory, Alibaba accessKey
   secretKey: 1234aw2 # Mandatory, Alibaba secretKey

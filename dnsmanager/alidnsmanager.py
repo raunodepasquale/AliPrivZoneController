@@ -1,11 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import json
+import yaml
+import subprocess
+import datetime
 import logging
 from logging.config import dictConfig
 import requests
 from docopt import docopt
 from requests_toolbelt.adapters import host_header_ssl
+# For Private Zone
+from aliyunsdkpvtz.request.v20180101.DescribeZoneRecordsRequest import DescribeZoneRecordsRequest
+from aliyunsdkpvtz.request.v20180101.UpdateZoneRecordRequest import UpdateZoneRecordRequest
+# For Public Zone currently not used
+from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
+from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
+from aliyunsdkcore.client import AcsClient
 import ssl
 ssl_context = ssl.create_default_context()
 # Sets up old and insecure TLSv1.
@@ -113,19 +126,100 @@ if os.getenv('probeVerb') == 'POST':
         except:
             logger.info(f'Exception on the request to backupIP')
 
-# Execute the Terraform apply for the DNS record update
-logger.info(f'Updating domain record: {hostName} with IP {targetIp}')
-initCommand = os.popen('./terraform init')
-output = initCommand.read()
-logger.info(f'Terraform init command output: {output}')
-applyCommand = './terraform apply -auto-approve -compact-warnings -var \'accessKey='+accessKey+'\' -var \'secretKey='+secretKey+'\' -var \'region='+region+'\' -var \'privZoneId='+privZoneId+'\' -var \'hostName='+hostName+'\' -var \'targetIp='+targetIp+'\''
-logger.info(f'Executing Terraform Command: {applyCommand}')
-stream = os.popen(applyCommand)
-output = stream.read()
-logger.info(f'Terraform apply command output: {output}')
+def get_aliyun_access_client(_id, secret, region):
+    r"""
+    Create an authenticated client for API calls to Aliyun.
+    :param _id: access key id
+    :param secret: secret of the access key
+    :param region: e.g. "cn-hangzhou", "cn-shenzhen"
+    :return: access client object
+    """
+    try:
+        client = AcsClient(_id, secret, region)
+        logging.info('Successfully obtained access client instance.')
+        return client
+    except Exception as e:
+        logging.error("Aliyun access key authentication failed.")
+        logging.error(e)
+        sys.exit(-1)
 
 
+# Get required parameters and methods are different for public DNS
+def get_dns_record_id(client, domain, host, ip_address):
+    try:
+        request = DescribeZoneRecordsRequest()
+        request.set_accept_format('json')
+        request.set_ZoneId(privZoneId)
+        request.set_Keyword(hostName)
+        request.set_PageSize(100)
+        response = client.do_action_with_exception(request)
+        json_data = json.loads(str(response, encoding='utf-8'))
 
+        for RecordId in json_data['Records']['Record']:
+            if host == RecordId['Rr']:
+                logging.info("Found a matched RecordId: {_record_id}.".format(
+                    _record_id=RecordId["RecordId"]
+                ))
+                if ip_address == RecordId['Value']:
+                    return None
+                else:
+                    return RecordId['RecordId']
+
+    except Exception as e:
+        logging.error("Unable to get RecordId.")
+        logging.error(e)
+        sys.exit(-1)
+
+# Update on public and private DNS use the same input data and the same attributes
+def update_domain_record(client, host, domain, _type, ip_address, record_id):
+    try:
+        request = UpdateZoneRecordRequest()
+        request.set_accept_format('json')
+        request.set_Value(ip_address)
+        request.set_Type(_type)
+        request.set_Rr(host)
+        request.set_RecordId(record_id)
+        response = client.do_action_with_exception(request)
+        logging.info("Successfully updated domain record: {_host}.{_domain} ({__type} record) to {_ip_address}.".format(
+            _host=host,
+            _domain=domain,
+            __type=_type,
+            _ip_address=ip_address
+        ))
+        logging.debug(response)
+    except Exception as e:
+        logging.error("Failed to update domain record: {_host}.{_domain} ({__type} record) to {_ip_address}.".format(
+            _host=host,
+            _domain=domain,
+            __type=_type,
+            _ip_address=ip_address
+        ))
+        logging.error(e)
+
+def main():
+    t_start = datetime.datetime.now()
+    logging.info("--- Task started at {time}".format(time=t_start.strftime("%Y-%m-%d %H:%M:%S %f")))
+    # Configuration section
+    access_key = os.getenv('accessKey')
+    secret = os.getenv('secretKey')
+    region = os.getenv('region')
+    domain = os.getenv('domainName')
+    host = os.getenv('hostName')
+    _type = 'A'
+
+    ip_address = targetIp
+    client = get_aliyun_access_client(access_key, secret, region)
+    record_id = get_dns_record_id(client, domain, host, ip_address)
+    if record_id is None:
+        logging.info("No DNS record to update, skip and exit")
+    else:
+        update_domain_record(client, host, domain, _type, ip_address, record_id)
+
+    t_end = datetime.datetime.now()
+    logging.info("--- Task ended at: {time}".format(time=t_end.strftime("%Y-%m-%d %H:%M:%S %f")))
+    return 0
+
+main()
 
 
 
