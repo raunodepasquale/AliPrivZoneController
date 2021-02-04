@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     unzip \
   && rm -rf /var/lib/apt/lists/*
-RUN pip install docopt && pip install requests && pip install pyopenssl && pip install requests-toolbelt
+RUN pip install docopt && pip install requests && pip install pyopenssl && pip install requests-toolbelt && pip install forcediphttpsadapter
 RUN pip install pyyaml  && pip install aliyun-python-sdk-core-v3 && pip install aliyun-python-sdk-alidns && pip install aliyun-python-sdk-pvtz
 COPY alidnsmanager.py /alidnsmanager.py 
 WORKDIR /
