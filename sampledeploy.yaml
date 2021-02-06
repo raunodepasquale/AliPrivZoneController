@@ -9,13 +9,16 @@ spec:
   cronSpec: "* * * * *" # Mandatory, cron frequency to run the job
   hostName: www # Mandatory, the hostname for the web application you want to manage in the private zone DNS
   domainName: newesis.com # Mandatory, the DNS zone for your private zone DNS. Combined with the hostName will create the FQDN of your web resource
-  probeUrl: /about # Path, relative to the root of the site, for the HTTP request used as probe, default to / if not present
-  probeVerb: GET # Method for the HTTP request used as probe, default to GET if not present; possible values GET or POST
-  probeSchema: HTTP # Protocol for the HTTP request used as probe, default to HTTP if not present; possible values HTTP and HTTPS
-  mainIp: 40.85.114.137 # Mandatory, main IP for the DNS record
-  backupIp: 52.164.227.161 # Mandatory, backup IP for the DNS record (to be used if the main one not working)
-  image: newesissrl.azurecr.io/alidnsmanager:0.4.0 # Mandatory, image to be executed in the cronjob, you can replace it with a custom one, all specs here will be available as env variables
-  privZoneId: 1234eerae2 # Mandatory, Alibaba privateZoneID
-  accessKey: 123erer4aw2 # Mandatory, Alibaba accessKey
-  secretKey: 1234aw2 # Mandatory, Alibaba secretKey
+  probeUrl: /about # Mandatory, path, relative to the root of the site, for the HTTP request used as probe, need to start with /
+  probeVerb: GET # Mandatory, Method for the HTTP request used as probe; possible values GET or POST
+  probeSchema: HTTPS # Mandatory, Protocol for the HTTP request used as probe; possible values HTTP and HTTPS
+  mainIp: 52.164.227.161 # Mandatory, main IP for the DNS record
+  backupIp: 40.85.114.137 # Mandatory, backup IP for the DNS record (to be used if the main one not working)
+  image: newesissrl.azurecr.io/alidnsmanager:1.0.0 # Mandatory, image to be executed in the cronjob, you can replace it with a custom one, all specs here will be available as env variables
+  privZoneId: 1a1a10a1100000000a0a0a000000aaa0 # Mandatory the ID of the Alibaba privateZone (if Public DNS used put any string)
+  accessKey: AAAA111AAAAAAA11aAAaaa1 # Mandatory, Alibaba accessKey
+  secretKey: aaAAAA111AAAAAAA11aAAaaa100000aa # Mandatory, Alibaba secretKey
   region: eu-central-1 # Mandatory, Alibaba region
+  isPublicDns: True # Mandatory, Boolean to instruct to use Alibaba Private Zone or Public DNS
+  ignoreCertError: False # Mandatory, Boolean to configure the probe to ignore certificate errors during the test, set to true if using self signed certificates or if there is a mismatch between hostname and certificate
+  

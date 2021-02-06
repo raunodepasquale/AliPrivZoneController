@@ -70,6 +70,8 @@ backupIp = os.getenv('backupIp')
 probeSchema = os.getenv('probeSchema')
 probeUrl = os.getenv('probeUrl')
 probeVerb = os.getenv('probeVerb')
+ignoreCertError = os.getenv('ignoreCertError')
+isPublicDns = os.getenv('isPublicDns')
 
 # Probe mainIP and backupIP, if mainIP working use that one, if not working test backup, if working use that one, if not leave the main
 headers = {
@@ -94,10 +96,16 @@ if probeSchema == 'HTTPS':
     try:
         if probeVerb == 'GET':
             logger.info(f'GET request execution')
-            r = s.get(url, headers=headers)
+            if ignoreCertError == 'True':
+                r = s.get(url, headers=headers, verify=False)
+            elif ignoreCertError == 'False':
+                r = s.get(url, headers=headers)
         elif probeVerb == 'POST':
             logger.info(f'POST request execution')
-            r = s.post(url, headers=headers)
+            if ignoreCertError == 'True':
+                r = s.post(url, headers=headers, verify=False)
+            elif ignoreCertError == 'False':
+                r = s.post(url, headers=headers)
         logger.info(f'Request response is: {r.status_code}')
         statusCode = r.status_code
     except:
@@ -136,10 +144,16 @@ if mainIpStatus == "down":
         try:
             if probeVerb == 'GET':
                 logger.info(f'GET request execution')
-                r = s.get(url, headers=headers)
+                if ignoreCertError == 'True':
+                    r = s.get(url, headers=headers, verify=False)
+                elif ignoreCertError == 'False':
+                    r = s.get(url, headers=headers)
             elif probeVerb == 'POST':
                 logger.info(f'POST request execution')
-                r = s.post(url, headers=headers)
+                if ignoreCertError == 'True':
+                    r = s.post(url, headers=headers, verify=False)
+                elif ignoreCertError == 'False':
+                    r = s.post(url, headers=headers)
             logger.info(f'Request response is: {r.status_code}')
             statusCode = r.status_code
         except:
@@ -212,14 +226,48 @@ def get_dns_record_id(client, domain, host, ip_address):
         logging.error(e)
         sys.exit(-1)
 
-# Update on public and private DNS use the same input data and the same attributes
-def update_domain_record(client, host, domain, _type, ip_address, record_id):
+# Get required parameters and methods are different for public DNS
+def get_public_dns_record_id(client, domain, host, ip_address):
     try:
-        request = UpdateZoneRecordRequest()
+        request = DescribeDomainRecordsRequest()
+        request.set_accept_format('json')
+        request.set_DomainName(domain)
+        request.set_RRKeyWord(hostName)
+        request.set_Type("A")
+        request.set_PageSize(100)
+        response = client.do_action_with_exception(request)
+        json_data = json.loads(str(response, encoding='utf-8'))
+
+        for RecordId in json_data['DomainRecords']['Record']:
+            if host == RecordId['RR']:
+                logging.info("Found a matched RecordId: {_record_id}.".format(
+                    _record_id=RecordId["RecordId"]
+                ))
+                if ip_address == RecordId['Value']:
+                    return None
+                else:
+                    return RecordId['RecordId']
+
+    except Exception as e:
+        logging.error("Unable to get RecordId.")
+        logging.error(e)
+        sys.exit(-1)
+
+
+# Update on public and private DNS use the same input data and the same attributes just different funcion
+def update_domain_record(client, host, domain, _type, ip_address, record_id, isPublicDns):
+    try:
+        if isPublicDns == 'False':
+            request = UpdateZoneRecordRequest()
+        elif isPublicDns == 'True':
+            request = UpdateDomainRecordRequest()
         request.set_accept_format('json')
         request.set_Value(ip_address)
         request.set_Type(_type)
-        request.set_Rr(host)
+        if isPublicDns == 'False':
+            request.set_Rr(host)
+        elif isPublicDns == 'True':
+            request.set_RR(host)
         request.set_RecordId(record_id)
         response = client.do_action_with_exception(request)
         logging.info("Successfully updated domain record: {_host}.{_domain} ({__type} record) to {_ip_address}.".format(
@@ -238,6 +286,7 @@ def update_domain_record(client, host, domain, _type, ip_address, record_id):
         ))
         logging.error(e)
 
+
 def main():
     t_start = datetime.datetime.now()
     logging.info("--- Task started at {time}".format(time=t_start.strftime("%Y-%m-%d %H:%M:%S %f")))
@@ -253,11 +302,14 @@ def main():
     logger.info(f'Target host {host} in domain {domain} and region {region} will be set to IP {ip_address}')
 
     client = get_aliyun_access_client(access_key, secret, region)
-    record_id = get_dns_record_id(client, domain, host, ip_address)
+    if isPublicDns == 'False':
+        record_id = get_dns_record_id(client, domain, host, ip_address)
+    elif isPublicDns == 'True':
+        record_id = get_public_dns_record_id(client, domain, host, ip_address)
     if record_id is None:
         logging.info("No DNS record to update, skip and exit")
     else:
-        update_domain_record(client, host, domain, _type, ip_address, record_id)
+        update_domain_record(client, host, domain, _type, ip_address, record_id, isPublicDns)
 
     t_end = datetime.datetime.now()
     logging.info("--- Task ended at: {time}".format(time=t_end.strftime("%Y-%m-%d %H:%M:%S %f")))
@@ -265,3 +317,7 @@ def main():
 
 if backupIpStatus != "down" or mainIpStatus != "down":
     main()
+
+
+
+

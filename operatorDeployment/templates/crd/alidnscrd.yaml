@@ -24,13 +24,13 @@ spec:
                 # domainName for the DNS zone (combined with the hostName it will result in the FQDN)
                 domainName:
                   type: string
-                # probe to test via http to verify status of each end point (relative path as /test/page , defaults to /)
+                # probe to test via http to verify status of each end point (relative path as /test/page , mandatory to start with /)
                 probeUrl:
                   type: string
-                # verb or method to be used for the test (GET, POST, defaults to GET)
+                # verb or method to be used for the test (GET or POST)
                 probeVerb:
                   type: string
-                # Schema to the use for the probe (HTTP, HTTPS, defaults to HTTP)
+                # Schema to the use for the probe (HTTP or HTTPS)
                 probeSchema:
                   type: string
                 # IP to be preferred for the hostname
@@ -42,18 +42,24 @@ spec:
                 # image to be used on the cronjob
                 image:
                   type: string
-                # ID of the Alibaba DNS Private Zone
+                # ID of the Alibaba DNS Private Zone (a string to be set also in case of use of Public DNS)
                 privZoneId:
                   type: string
-                  # AccessKey to access Alibaba APIs via Terraform
+                  # AccessKey to access Alibaba APIs
                 accessKey:
                   type: string
-                # secretKey to access Alibaba APIs via Terraform
+                # secretKey to access Alibaba APIs
                 secretKey:
                   type: string
                   # target region in Alibaba
                 region:
                   type: string
+                    # Boolean to configure the probe to ignore certificate errors during the test, set to true if using self signed certificates or if there is a mismatch between hostname and certificate
+                ignoreCertError:
+                  type: boolean
+                    # Boolean to instruct to use Alibaba Public DNS or Alibaba Private Zone DNS
+                isPublicDns:
+                  type: boolean
   scope: Namespaced
   names:
     plural: alidns
